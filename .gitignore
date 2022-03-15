@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+*.json
+tmp
+.idea
+.vscode
+venv
+setup.py
