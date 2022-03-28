@@ -73,10 +73,10 @@ def chat_help(update: Update, context: CallbackContext):
     Supported commands:
 /start - start bot
 /help - show supported commands
-/history - show last five logs
+/cat - get random cat photo
+/down - get info about 
 /movie - get random movie from top-250 IMDb
 /pokemon - get info and image of random pokemon
-/weather - get current weather info and forecast for the next 12 hours
 /fact_year <year> - get interesting fact about particular year (default value - 2020)
 /fact_number <number> - get integersting fact about number (default value - random < 1000)
 /coin - to flip a coin
@@ -94,32 +94,6 @@ def echo(update: Update, context: CallbackContext):
 def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
     logger.warning(f'Update {update} caused error {context.error}')
-
-
-def history(update: Update, context: CallbackContext):
-    """Send a message when the command /logs is issued."""
-    logs = Logs()
-    logslist = logs.getLastFiveLogs()
-    # print(logslist)
-    for log in logslist:
-        response = ""
-        for key, value in log.items():
-            response = response + f'{key}: {value}\n'
-        update.message.reply_text(response)
-
-
-def test(update: Update, context: CallbackContext):
-    new_log = {
-        "user": update.effective_user.first_name,
-        "function": "anonym",
-        "message": "test",
-        "time": update.message.date
-    }
-    logs = Logs()
-    loglist = []
-    for _ in range(100000):
-        loglist.append(new_log)
-    logs.addLogs(loglist)
 
 @add_log
 def movie(update: Update, context: CallbackContext):
@@ -247,8 +221,6 @@ def main():
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(CommandHandler('help', chat_help))
-    dispatcher.add_handler(CommandHandler('history', history))
-    dispatcher.add_handler(CommandHandler('test', test))
     dispatcher.add_handler(CommandHandler('cat', get_random_cat))
     dispatcher.add_handler(CommandHandler('down', get_down_info))
     dispatcher.add_handler(CommandHandler('movie', movie))
