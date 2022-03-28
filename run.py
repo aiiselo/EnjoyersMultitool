@@ -9,11 +9,12 @@ import datetime
 
 from bs4 import BeautifulSoup
 from imdb import IMDb
-from setup import TOKEN, RAPID_API
+from setup import TOKEN, RAPID_API, OW_API
 from telegram import Bot, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
 from classes import Logs
 
+openweather_url = "http://api.openweathermap.org/data/2.5/weather?q="
 
 date = datetime.date.today().strftime("%m-%d-%Y")
 bot = Bot(token=TOKEN)
@@ -76,10 +77,11 @@ def chat_help(update: Update, context: CallbackContext):
 /cat - get random cat photo
 /down - get info about 
 /movie - get random movie from top-250 IMDb
+/weather <city> - get weather info for your city
 /pokemon - get info and image of random pokemon
 /fact_year <year> - get interesting fact about particular year (default value - 2020)
 /fact_number <number> - get integersting fact about number (default value - random < 1000)
-/coin - to flip a coin
+/magic_ball - predict your future
 """
     update.message.reply_text(text)
 
@@ -87,8 +89,41 @@ def chat_help(update: Update, context: CallbackContext):
 @add_log
 def echo(update: Update, context: CallbackContext):
     """Echo the user message."""
-    update.message.reply_text(update.message.text)
+    text = str(update.message.text)
+    print(text)
+    if text.startswith("/weather "):
+        get_weather(text, update.effective_chat['id'])
+    else:
+        update.message.reply_text(update.message.text)
 
+
+def get_weather(text, chat_id):
+    city = text.replace("/weather ", "")
+    city_request = requests.get(openweather_url + city + OW_API)
+    try:
+        city_dict = city_request.json()
+        request_code = city_dict["cod"]
+
+        if request_code != 200:
+            bot.send_message(chat_id=chat_id, text=city_dict["message"])
+        else:
+            city_name = city_dict["name"]
+            country_name = city_dict["sys"]["country"]
+            city_weather = city_dict["weather"][0]["description"]
+            city_temperature = str(int(float(city_dict["main"]["temp"]) - 273.15 + 0.5))
+            city_pressure = str(city_dict["main"]["pressure"])
+            city_humidity = str(city_dict["main"]["humidity"])
+            city_wind = str(city_dict["wind"]["speed"])
+
+            weather_text = "<b>Город: </b>{} - {}\n<b>Погода: </b>{}\n<b>Температура: </b>{}°C\n" \
+                           "<b>Ат. давление: </b>{} мм.рт.ст.\n<b>Влажность: </b>{}%\n<b>Ветер: </b>{} м/с".format(
+                            city_name, country_name, city_weather, city_temperature, city_pressure, city_humidity,
+                            city_wind)
+            bot.send_message(chat_id=chat_id, text=weather_text,
+                             parse_mode='HTML')
+    except:
+        bot.send_message(chat_id=chat_id,
+                         text="🛠 Ошибка на стороне сервиса погоды. Попробуйте еще раз.")
 
 @add_log
 def error(update: Update, context: CallbackContext):
@@ -208,8 +243,30 @@ def fact_number(update: Update, context: CallbackContext):
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
 @add_log
-def coin(update: Update, context: CallbackContext):
-    response = random.choice(['Орёл', 'Решка'])
+def magic_ball(update: Update, context: CallbackContext):
+    responses = [
+        "It is certain",
+        "Without a doubt",
+        "You may rely on it",
+        "Yes definitely",
+        "It is decidedly so",
+        "As I see it, yes",
+        "Most likely",
+        "Yes",
+        "Outlook good",
+        "Signs point to yes",
+        "Reply hazy try again",
+        "Better not tell you now",
+        "Ask again later",
+        "Cannot predict now",
+        "Concentrate and ask again",
+        "Don't count on it",
+        "Outlook not so good",
+        "My sources say no",
+        "Very doubtful",
+        "My reply is no"
+    ]
+    response = random.choice(responses)
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
 
@@ -227,7 +284,7 @@ def main():
     dispatcher.add_handler(CommandHandler('pokemon', pokemon))
     dispatcher.add_handler(CommandHandler('fact_year', fact_year))
     dispatcher.add_handler(CommandHandler('fact_number', fact_number))
-    dispatcher.add_handler(CommandHandler('coin', coin))
+    dispatcher.add_handler(CommandHandler('magic_ball', magic_ball))
 
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text, echo))
