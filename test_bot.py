@@ -27,7 +27,10 @@ def test_number():
 def test_movie():
     text = movie_response()
     assert "Title" in text
+    assert "Genre" in text
     assert "Year" in text
+    assert "Director" in text
+    assert "Runtime" in text
     assert "IMDb rating" in text
     assert "Top 250 rank" in text
     assert "Link" in text
