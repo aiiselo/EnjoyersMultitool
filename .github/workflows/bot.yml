@@ -24,6 +24,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     - name: Python Pytest Github Action
+      env:
+        OW_API: ${{ secrets.OW_API }}
+        RAPID_API: ${{ secrets.RAPID_API }}
+        TOKEN: ${{ secrets.TOKEN }}
       uses: fylein/python-pytest-github-action@v2
       with:
         args: pip install -r requirements.txt && pytest
