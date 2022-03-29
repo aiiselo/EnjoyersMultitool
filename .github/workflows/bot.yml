@@ -32,10 +32,6 @@ jobs:
       uses: codacy/codacy-analysis-cli-action@master
     - name: PyCharm Python Security Scanner
       uses: tonybaloney/pycharm-security@1.25.1
-    - name: Python security check using Bandit
-      uses: Joel-hanson/bandit-report-artifacts@V1
-      with:
-        exit_zero: true
     - name: urlchecker-action
       uses: urlstechie/urlchecker-action@0.0.26
 
