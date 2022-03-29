@@ -3,4 +3,3 @@ requests
 datetime
 imdbpy
 bs4
-pytest
