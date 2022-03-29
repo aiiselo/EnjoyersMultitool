@@ -11,4 +11,6 @@ ci:
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
+    hooks:
+     -   id: pylint
     rev: v1.2.3
