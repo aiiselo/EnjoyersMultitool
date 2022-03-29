@@ -8,3 +8,6 @@ ci:
     autoupdate_schedule: weekly
     skip: []
     submodules: false
+
+repos:
+    repo: https://github.com/aiiselo/yoba-project
