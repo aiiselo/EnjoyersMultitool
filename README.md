@@ -1,33 +1,26 @@
-# Lucky 7 Team Bot
+# Enjoyer's Multi-Tool
+#### Authors:
+- Olesya Martinyuk
+- Nikita Ignatovskiy
+- Andrei Zhuravlev
 
-This is a repository for Telegram bot that will be developed by Team №7 during Intel Academic Program Python Course.
+**Enjoyer's Multi-Tool** - bot for Telegram messenger. Designed as a "multitool" that contains a set of useful and entertainful commands.
 
-Team:
-1. [Olessia Martynyuk](https://github.com/aiiselo) (Team-Lead)
-2. [Stepan Malov](https://github.com/Step2Victory)
-3. [Valeria Manaenkova](https://github.com/VallyWonka)
+This bot can be added to a group chat, so that its memebers can interact with it, or users can address it directly.
 
-## Set up Python environment
+To add it to a group chat, add a group member with username ```@multi_tool_2022_bot```. It can also be found at [t.me/multi_tool_2022_bot](https://t.me/multi_tool_2022_bot)
+<img src="enjoyer.png" alt="drawing" width=200>
 
-1. Create virtual environment `python -m venv venv`
-2. Activate virtual environment and install requirements: 
-
-    `venv\Scripts\activate` - on Linux  
-    `source venv/bin/activate` - on Mac
-    `venv\Scripts\activate.bat` - on Windows  
-    `pip install -r requirements.txt`  
-
-3. Execute ``python run.py``
-
-## Supported commands
-
-- `/start` - start bot  
-- `/help` - show supported commands 
-- `/history` - show last five logs  
-- `/fact` - get the most popular fact about cats  
-- `/movie` - get random movie from top-250 IMDb  
-- `/corona_stats` - get top-5 infected countries 
-- `/corona_stats_dynamics` - get dynamic of COVID-19 distribution
-- `/pokemon` - get info and image of random pokemon
-- `/joke` - bot will make you laugh (probably)
-- `/weather` - get current weather info and a forecast for the next 12 hours
+### List of commands
+| Command | Description |
+| ------- | ----------- |
+| /start | start the bot |
+| /help  | list all supported commands |
+| /cat   | get a random picture of a cat :3 |
+| /down  | get information about services that are currently experiencing technical issues. This infromation is provided by [servicedown.com](https://servicesdown.com) |
+| /movie | get random movie with brief information about it from IMDB's top 250 |
+| /weather <city> | get weather forecast for a given city. \<city\>  parameter can be passed in both English and Russian |
+| /pokemon | get brief description for a random pokemon from Pokemon anime |
+| /fact_year [year] | get an interesting fact for a given year. Default value for a ```year``` parameter is 2020 |
+| /fact_number [number] | get an interesting fact for a given number. If no number was provided bot uses a random value in range 0..<1000 |
+| /magic_ball | returns random "yes" or "no" wrapped in different phrases |
