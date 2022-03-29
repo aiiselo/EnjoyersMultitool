@@ -26,7 +26,7 @@ jobs:
     - name: Python Pytest Github Action
       uses: fylein/python-pytest-github-action@v2
       with:
-        args: pip install -r requirements.txt
+        args: pip install -r requirements.txt && pytest .
     - name: Lint with flake8
       run: |
         pip install flake8
