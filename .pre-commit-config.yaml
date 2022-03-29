@@ -10,4 +10,4 @@ ci:
     submodules: false
 
 repos:
-    repo: https://github.com/aiiselo/yoba-project
+-   repo: https://github.com/aiiselo/yoba-project
