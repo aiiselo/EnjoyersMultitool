@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,6 +28,8 @@ jobs:
         pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --config=setup.cfg --max-line-length=120 --show-source --statistics --exit-zero
+    - name: Run Codacy Analysis CLI
+      uses: codacy/codacy-analysis-cli-action@master
     - name: PyCharm Python Security Scanner
       uses: tonybaloney/pycharm-security@1.25.1
     - name: Python security check using Bandit
