@@ -143,15 +143,7 @@ def fact_number(update: Update, context: CallbackContext):
         number = data[1]
     except:
         number = random.randint(0, 1000)
-    url = f"https://numbersapi.p.rapidapi.com/{number}/math"
-    querystring = {"fragment": "true", "json": "true"}
-    headers = {
-        'x-rapidapi-host': "numbersapi.p.rapidapi.com",
-        'x-rapidapi-key': RAPID_API
-    }
-    response = requests.request("GET", url, headers=headers, params=querystring)
-    response = json.loads(response.text)
-    response = f"Fact for number {number}: " + response["text"].capitalize()
+    response = number_response(number)
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
 

@@ -49,6 +49,18 @@ def pokemon_response():
                 """
     return text, pokemon_info['sprites']['front_default']
 
+def number_response(number):
+    url = f"https://numbersapi.p.rapidapi.com/{number}/math"
+    querystring = {"fragment": "true", "json": "true"}
+    headers = {
+        'x-rapidapi-host': "numbersapi.p.rapidapi.com",
+        'x-rapidapi-key': RAPID_API
+    }
+    response = requests.request("GET", url, headers=headers, params=querystring )
+    response = json.loads(response.text)
+    response = f"Fact for number {number}: " + response["text"].capitalize()
+    return response    return text, pokemon_info['sprites']['front_default']
+
 
 def movie_response():
     ia = IMDb()
