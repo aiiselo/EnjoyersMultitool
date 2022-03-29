@@ -1,4 +1,6 @@
 # Enjoyer's Multi-Tool
+<img src="enjoyer.png" alt="drawing" width=200>  
+
 #### Authors:
 - Olesya Martinyuk
 - Nikita Ignatovskiy
@@ -9,7 +11,7 @@
 This bot can be added to a group chat, so that its memebers can interact with it, or users can address it directly.
 
 To add it to a group chat, add a group member with username ```@multi_tool_2022_bot```. It can also be found at [t.me/multi_tool_2022_bot](https://t.me/multi_tool_2022_bot)
-<img src="enjoyer.png" alt="drawing" width=200>
+
 
 ### List of commands
 | Command | Description |
