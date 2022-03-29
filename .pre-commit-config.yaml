@@ -11,6 +11,6 @@ ci:
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
     hooks:
-     -   id: pylint
-    rev: v1.2.3
+    -   id: trailing-whitespace
