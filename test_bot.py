@@ -22,3 +22,19 @@ def test_pokemon():
 def test_number():
     response = number_response(1)
     assert "Fact for number 1:" in response
+
+
+def test_movie():
+    text = movie_response()
+    assert "Title" in text
+    assert "Year" in text
+    assert "IMDb rating" in text
+    assert "Top 250 rank" in text
+    assert "Link" in text
+
+
+def test_year():
+    year = "1941"
+    text = year_response(year)
+    assert "Year" in text
+    assert year in text

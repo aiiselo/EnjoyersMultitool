@@ -79,23 +79,7 @@ def error(update: Update, context: CallbackContext):
 
 
 def movie(update: Update, context: CallbackContext):
-    ia = IMDb()
-    top = ia.get_top250_movies()
-    random_movie = top[random.randint(0, 249)]
-    id = 'tt' + random_movie.movieID
-    info = requests.get(f'http://www.omdbapi.com/?apikey=5a5643&i={id}')
-    info = json.loads(info.text)
-    # poster = requests.get(f'http://img.omdbapi.com/?apikey=5a5643&i={id}')
-    text = f"""
-Title: {random_movie.data['title']}
-Genre: {info["Genre"]}
-Year: {random_movie.data['year']}
-Director: {info["Director"]}
-Runtime: {info["Runtime"]}
-IMDb rating: {random_movie.data['rating']}
-Top 250 rank: {random_movie.data['top 250 rank']}
-Link: https://www.imdb.com/title/{id}/
-"""
+    text = movie_response()
     update.message.reply_text(text=text, disable_web_page_preview=False)
 
 
@@ -111,15 +95,7 @@ def fact_year(update: Update, context: CallbackContext):
         year = data[1]
     except:
         year = datetime.datetime.now().year
-    url = f"https://numbersapi.p.rapidapi.com/{year}/year"
-    querystring = {"fragment": "true", "json": "true"}
-    headers = {
-        'x-rapidapi-host': "numbersapi.p.rapidapi.com",
-        'x-rapidapi-key': RAPID_API
-    }
-    response = requests.request("GET", url, headers=headers, params=querystring)
-    response = json.loads(response.text)
-    response = f"Year {year}: " + response["text"].capitalize()
+    response = year_response(year)
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
 
