@@ -34,6 +34,8 @@ jobs:
       uses: tonybaloney/pycharm-security@1.25.1
     - name: urlchecker-action
       uses: urlstechie/urlchecker-action@0.0.26
+      with:
+        force_pass : true
 
 
 
