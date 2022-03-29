@@ -1,4 +1,3 @@
-#!/usr/local/bin/python3
 # -*- coding: utf-8 -*-
 
 import logging
@@ -7,17 +6,18 @@ import random
 from timeit import default_timer as timer
 import requests
 import datetime
+
+from bs4 import BeautifulSoup
 from imdb import IMDb
-from setup import PROXY, TOKEN, YANDEX_API, RAPID_API
-from telegram import Bot, Update, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater, CallbackQueryHandler
-from classes import Logs, CSVStats, parseDateFromString
+from setup import TOKEN, RAPID_API, OW_API
+from telegram import Bot, Update
+from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
+from classes import Logs
+
+openweather_url = "http://api.openweathermap.org/data/2.5/weather?q="
 
 date = datetime.date.today().strftime("%m-%d-%Y")
-bot = Bot(
-    token=TOKEN,
-    base_url=PROXY,  # delete it if connection via VPN
-)
+bot = Bot(token=TOKEN)
 # Enable logging
 joke_id = ""
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -74,17 +74,14 @@ def chat_help(update: Update, context: CallbackContext):
     Supported commands:
 /start - start bot
 /help - show supported commands
-/history - show last five logs
-/fact_cat - get the most popular fact about cats
+/cat - get random cat photo
+/down - get info about 
 /movie - get random movie from top-250 IMDb
-/corona_stats - get top-5 COVID-19 infected countries
-/corona_stats_dynamics - get dynamic of COVID-19 distribution
+/weather <city> - get weather info for your city
 /pokemon - get info and image of random pokemon
-/joke - bot will make you laugh (probably)
-/weather - get current weather info and forecast for the next 12 hours
 /fact_year <year> - get interesting fact about particular year (default value - 2020)
 /fact_number <number> - get integersting fact about number (default value - random < 1000)
-/coin - to flip a coin
+/magic_ball - predict your future
 """
     update.message.reply_text(text)
 
@@ -92,53 +89,46 @@ def chat_help(update: Update, context: CallbackContext):
 @add_log
 def echo(update: Update, context: CallbackContext):
     """Echo the user message."""
-    update.message.reply_text(update.message.text)
+    text = str(update.message.text)
+    print(text)
+    if text.startswith("/weather "):
+        get_weather(text, update.effective_chat['id'])
+    else:
+        update.message.reply_text(update.message.text)
 
+
+def get_weather(text, chat_id):
+    city = text.replace("/weather ", "")
+    city_request = requests.get(openweather_url + city + OW_API)
+    try:
+        city_dict = city_request.json()
+        request_code = city_dict["cod"]
+
+        if request_code != 200:
+            bot.send_message(chat_id=chat_id, text=city_dict["message"])
+        else:
+            city_name = city_dict["name"]
+            country_name = city_dict["sys"]["country"]
+            city_weather = city_dict["weather"][0]["description"]
+            city_temperature = str(int(float(city_dict["main"]["temp"]) - 273.15 + 0.5))
+            city_pressure = str(city_dict["main"]["pressure"])
+            city_humidity = str(city_dict["main"]["humidity"])
+            city_wind = str(city_dict["wind"]["speed"])
+
+            weather_text = "<b>Город: </b>{} - {}\n<b>Погода: </b>{}\n<b>Температура: </b>{}°C\n" \
+                           "<b>Ат. давление: </b>{} мм.рт.ст.\n<b>Влажность: </b>{}%\n<b>Ветер: </b>{} м/с".format(
+                            city_name, country_name, city_weather, city_temperature, city_pressure, city_humidity,
+                            city_wind)
+            bot.send_message(chat_id=chat_id, text=weather_text,
+                             parse_mode='HTML')
+    except:
+        bot.send_message(chat_id=chat_id,
+                         text="🛠 Ошибка на стороне сервиса погоды. Попробуйте еще раз.")
 
 @add_log
 def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
     logger.warning(f'Update {update} caused error {context.error}')
-
-
-def history(update: Update, context: CallbackContext):
-    """Send a message when the command /logs is issued."""
-    logs = Logs()
-    logslist = logs.getLastFiveLogs()
-    # print(logslist)
-    for log in logslist:
-        response = ""
-        for key, value in log.items():
-            response = response + f'{key}: {value}\n'
-        update.message.reply_text(response)
-
-
-def test(update: Update, context: CallbackContext):
-    new_log = {
-        "user": update.effective_user.first_name,
-        "function": "anonym",
-        "message": "test",
-        "time": update.message.date
-    }
-    logs = Logs()
-    loglist = []
-    for _ in range(100000):
-        loglist.append(new_log)
-    logs.addLogs(loglist)
-
-
-@add_log
-def fact(update: Update, context: CallbackContext):
-    maximum = 0
-    upvoted_text = ''
-    r = requests.get('https://cat-fact.herokuapp.com/facts')
-    answer = json.loads(r.text)
-    for i in answer['all']:
-        if i['upvotes'] > maximum:
-            maximum = i['upvotes']
-            upvoted_text = i['text']
-    update.message.reply_text(upvoted_text)
-
 
 @add_log
 def movie(update: Update, context: CallbackContext):
@@ -176,82 +166,6 @@ Type: {pokemon_info['types'][0]['type']['name']}
     bot.send_message(chat_id=update.effective_chat['id'], text=text)
     bot.send_photo(chat_id=update.effective_chat['id'], photo=pokemon_info['sprites']['front_default'])
 
-
-@add_log
-def corona_stats(update: Update, context: CallbackContext):
-    if update.message is not None and update.message.from_user == update.effective_user:
-        CSVStats.date = parseDateFromString(update.effective_message.text)
-    csvStat = CSVStats("todaystats.csv")
-    if csvStat.status_code != 200:
-        keyboard = [[InlineKeyboardButton("Yes, show me data from previous day", callback_data="True"),
-                     InlineKeyboardButton("No, thank you", callback_data="False")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        bot.send_message(chat_id=update.effective_chat['id'],
-                         text=f"Something went wrong. Maybe, there is no data yet from {CSVStats.date}."
-                              f"Do you want to now data from previous day?", reply_markup=reply_markup)
-    else:
-        csvStat.changeRequest()
-        top_five = csvStat.getTopFiveProvinces()
-        # print(top_five)
-        text = "TOP-5 infected regions:\n"
-        for i in range(len(top_five)):
-            text += f'{i + 1}. {top_five[i]["province"]} - {top_five[i]["new infected"]} infected\n'
-        if update.message is not None and update.message.from_user == update.effective_user:
-            bot.send_message(chat_id=update.effective_message.chat_id,
-                             message_id=update.effective_message.message_id,
-                             text=f"COVID-19 statistics dynamics from {CSVStats.date}\n{text}")
-        else:
-            bot.edit_message_text(chat_id=update.effective_message.chat_id,
-                                  message_id=update.effective_message.message_id,
-                                  text=f"COVID-19 statistics dynamics from {CSVStats.date}\n{text}")
-        CSVStats.date = datetime.date.today().strftime("%m-%d-%Y")
-
-
-@add_log
-def corona_stats_dynamics(update: Update, context: CallbackContext):
-    today_stats = CSVStats("today_stats.csv")
-    yesterday_stats = CSVStats("yesterday_stats.csv")
-    while today_stats.status_code != 200:
-        today_stats.date = (datetime.datetime.strptime(today_stats.date, "%m-%d-%Y") -
-                            datetime.timedelta(days=1)).strftime("%m-%d-%Y")
-        today_stats.changeRequest()
-    yesterday_stats.date = (datetime.datetime.strptime(today_stats.date, "%m-%d-%Y") -
-                            datetime.timedelta(days=1)).strftime("%m-%d-%Y")
-    yesterday_stats.changeRequest()
-    today_top_five = today_stats.getTopFiveProvinces()
-    yesterday_top_five = yesterday_stats.getTopFiveProvinces()
-    text = f"COVID-19 statistics dynamics from {yesterday_stats.date} to {today_stats.date}: \n"
-    for i in range(5):
-        old_infected = 0
-        for j in range(len(yesterday_top_five)):
-            if today_top_five[i]["province"] == yesterday_top_five[j]["province"]:
-                old_infected = yesterday_top_five[j]["new infected"]
-                break
-        text += f'{i + 1}. {today_top_five[i]["province"]} - {today_top_five[i]["new infected"]} ' \
-                f'(+{today_top_five[i]["new infected"] - old_infected}) infected\n'
-    bot.send_message(chat_id=update.effective_message.chat_id, message_id=update.effective_message.message_id,
-                     text=f"{text}")
-
-
-@add_log
-def joke(update: Update, context: CallbackContext):
-    url = "https://joke3.p.rapidapi.com/v1/joke"
-    headers = {
-        'x-rapidapi-host': "joke3.p.rapidapi.com",
-        'x-rapidapi-key': RAPID_API
-    }
-    global joke_id
-    response = json.loads(requests.request("GET", url, headers=headers).text)
-    joke_id = response["id"]
-    content = response["content"]
-    likes = response["upvotes"]
-    dislikes = response["downvotes"]
-    keyboard = [[InlineKeyboardButton(f"Like ❤️ {likes}", callback_data="Like"),
-                 InlineKeyboardButton(f"Dislike 💔 {dislikes}", callback_data="Dislike"),
-                 InlineKeyboardButton("More jokes", callback_data="More jokes")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.send_message(chat_id=update.effective_chat['id'], text=content, reply_markup=reply_markup)
-
 @add_log
 def fact_year(update: Update, context: CallbackContext):
     data = update.message['text'].split()
@@ -270,6 +184,44 @@ def fact_year(update: Update, context: CallbackContext):
     response = json.loads(response.text)
     response = f"Year {year}: " + response["text"].capitalize()
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
+
+@add_log
+def get_random_cat(update: Update, context: CallbackContext):
+    for i in range(5):
+        try:
+            pic_request = requests.get(url="https://api.thecatapi.com/v1/images/search")
+            pic_dict = pic_request.json()[0]
+            pic_url = pic_dict['url']
+
+            bot.send_photo(chat_id=update.effective_chat['id'], photo=pic_url)
+        except:
+            continue
+        else:
+            break
+    else:
+        bot.send_message(chat_id=update.effective_chat['id'],
+                         text="🛠 Сервис по выдаче рандомных котиков приуныл. Попробуйте позже.")
+
+@add_log
+def get_down_info(update: Update, context: CallbackContext):
+    url_uptime = "https://servicesdown.com"
+    uptime_request = requests.get(url_uptime).content
+    uptime_soup = BeautifulSoup(uptime_request, 'html')
+    status_uptime = uptime_soup.find_all("div", {"class": "flex flex-col items-center"})
+    down_list = []
+
+    for element in status_uptime:
+        if element.find("div", {"class": "bg-red-200 text-sm opacity-75 text-red-800 px-2 rounded text-center"}):
+            down_list.append(element.div.img.get('alt'))
+
+    down_text = "\n❌ ".join(down_list)
+
+    if down_list:
+        bot.send_message(chat_id=update.effective_chat['id'],
+                         text=f"🛠 Данные сервисы испытывают проблемы:\n\n❌ {down_text}")
+    else:
+        bot.send_message(chat_id=update.effective_chat['id'],
+                         text=f"🛠 Все сервисы в строю!")
 
 @add_log
 def fact_number(update: Update, context: CallbackContext):
@@ -291,144 +243,54 @@ def fact_number(update: Update, context: CallbackContext):
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
 @add_log
-def coin(update: Update, context: CallbackContext):
-    number = random.randint(0, 1000)
-    response = ""
-    if number % 2 == 1:
-        response = "Heads"
-    else:
-        response = "Tails"
+def magic_ball(update: Update, context: CallbackContext):
+    responses = [
+        "It is certain",
+        "Without a doubt",
+        "You may rely on it",
+        "Yes definitely",
+        "It is decidedly so",
+        "As I see it, yes",
+        "Most likely",
+        "Yes",
+        "Outlook good",
+        "Signs point to yes",
+        "Reply hazy try again",
+        "Better not tell you now",
+        "Ask again later",
+        "Cannot predict now",
+        "Concentrate and ask again",
+        "Don't count on it",
+        "Outlook not so good",
+        "My sources say no",
+        "Very doubtful",
+        "My reply is no"
+    ]
+    response = random.choice(responses)
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
-
-@add_log
-def weather(update: Update, context: CallbackContext):
-    url = "https://api.weather.yandex.ru/v1/informers/"
-    params = {
-        'lat': 56.3269,
-        'lon': 44.0059,
-        'lang': 'ru_RU',
-    }
-    header = {'X-Yandex-API-Key': YANDEX_API}
-    response = requests.get(url, params=params, headers=header).json()
-
-    wind_directions = {
-        "nw": "north-western",
-        "n": "northern",
-        "ne": "north-eastern",
-        "e": "eastern",
-        "se": "south-eastern",
-        "s": "southern",
-        "sw": "south-western",
-        "w": "western",
-        "c": "calm"
-    }
-
-    current_temperature = response['fact']['temp']
-    feels_like = response['fact']['feels_like']
-    condition = response['fact']['condition']
-    wind_speed = response['fact']['wind_speed']
-    wind_direction = wind_directions[response['fact']['wind_dir']]
-
-    # forecast_date = datetime.strptime(response['forecast']['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
-    forecast_date = '-'.join(response['forecast']['date'].split('-')[::-1])
-
-    part_one = response['forecast']['parts'][0]['part_name']
-    temp_min_one = response['forecast']['parts'][0]['temp_min']
-    temp_max_one = response['forecast']['parts'][0]['temp_max']
-    condition_one = response['forecast']['parts'][0]['condition']
-    wind_speed_one = response['forecast']['parts'][0]['wind_speed']
-    wind_direction_one = wind_directions[response['forecast']['parts'][0]['wind_dir']]
-
-    part_two = response['forecast']['parts'][1]['part_name']
-    temp_min_two = response['forecast']['parts'][1]['temp_min']
-    temp_max_two = response['forecast']['parts'][1]['temp_max']
-    condition_two = response['forecast']['parts'][1]['condition']
-    wind_speed_two = response['forecast']['parts'][1]['wind_speed']
-    wind_direction_two = wind_directions[response['forecast']['parts'][1]['wind_dir']]
-
-    message = f"""
-In Nizhny Novgorod it's now {condition}. The temperature is {current_temperature}°C but feels like {feels_like}°C.
-The {wind_direction} wind is at {wind_speed} m/s.
-
-During the {part_one} of {forecast_date} the temperature from {temp_min_one}°C to {temp_max_one}°C is expected,
-it's going to be {condition_one}. There's going to be {wind_direction_one} wind at {wind_speed_one} m/s.
-
-In the {condition_two} {part_two} of {forecast_date} you can expect the temperature from {temp_min_two}°C to
-{temp_max_two}°C. The winds are going to be {wind_direction_two} at {wind_speed_two} m/s.
-
-Source: Yandex.Weather
-More info at {response['info']['url']}
-"""
-    bot.send_message(chat_id=update.effective_chat['id'], text=message, disable_web_page_preview=True)
-
-
-def button_corona(update, context):
-    query = update.callback_query
-    if query['data'] == 'False':
-        global bot
-        bot.send_message(chat_id=update.callback_query.message.chat['id'], text='Хорошо :)')
-    else:
-        global date
-        CSVStats.date = (datetime.datetime.strptime(CSVStats.date, "%m-%d-%Y") - datetime.timedelta(days=1)).strftime(
-            "%m-%d-%Y")
-        corona_stats(update, context)
-
-
-def button_joke(update, context):
-    query = update.callback_query
-    if query['data'] == 'Like' or query['data'] == "Dislike":
-        global joke_id
-        url = f"https://joke3.p.rapidapi.com/v1/joke/{joke_id}/upvote" if query['data'] == 'Like' else f"https://joke3.p.rapidapi.com/v1/joke/{joke_id}/downvote" # noqa
-        payload = ""
-        headers = {
-            'x-rapidapi-host': "joke3.p.rapidapi.com",
-            'x-rapidapi-key': "837031bcd7msh57190d81a3d0374p19228ejsn5404ac1dd13a",
-            'content-type': "application/x-www-form-urlencoded"
-        }
-        response = requests.request("POST", url, data=payload, headers=headers)
-        response = json.loads(response.text)
-        content = response["content"]
-        likes = response["upvotes"]
-        dislikes = response["downvotes"]
-        keyboard = [[InlineKeyboardButton(f"Like ❤️ {likes}", callback_data="Like"),
-                     InlineKeyboardButton(f"Dislike 💔 {dislikes}", callback_data="Dislike"),
-                     InlineKeyboardButton("More jokes", callback_data="More jokes")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        text = "You ❤️ it!" if query['data'] == 'Like' else "You 💔️ it!"
-        bot.answerCallbackQuery(callback_query_id=update.callback_query.id, text=text)
-        bot.edit_message_text(message_id=update.callback_query.message.message_id,
-                              chat_id=update.callback_query.message.chat.id, text=content, reply_markup=reply_markup)
-    elif query['data'] == 'More jokes':
-        joke(update, context)
 
 
 def main():
-    updater = Updater(bot=bot, use_context=True)
+    updater = Updater(workers=32, use_context=True, token=bot.token)
+
+    dispatcher = updater.dispatcher
 
     # on different commands - answer in Telegram
-    updater.dispatcher.add_handler(CommandHandler('start', start))
-    updater.dispatcher.add_handler(CommandHandler('help', chat_help))
-    updater.dispatcher.add_handler(CommandHandler('history', history))
-    updater.dispatcher.add_handler(CommandHandler('test', test))
-    updater.dispatcher.add_handler(CommandHandler('fact_cat', fact))
-    updater.dispatcher.add_handler(CommandHandler('corona_stats', corona_stats))
-    updater.dispatcher.add_handler(CommandHandler('corona_stats_dynamics', corona_stats_dynamics))
-    updater.dispatcher.add_handler(CommandHandler('movie', movie))
-    updater.dispatcher.add_handler(CommandHandler('joke', joke))
-    updater.dispatcher.add_handler(CommandHandler('pokemon', pokemon))
-    updater.dispatcher.add_handler(CommandHandler('weather', weather))
-    updater.dispatcher.add_handler(CommandHandler('fact_year', fact_year))
-    updater.dispatcher.add_handler(CommandHandler('fact_number', fact_number))
-    updater.dispatcher.add_handler(CommandHandler('coin', coin))
-
-    updater.dispatcher.add_handler(CallbackQueryHandler(button_corona, pattern='(True|False)'))
-    updater.dispatcher.add_handler(CallbackQueryHandler(button_joke, pattern='(Like|Dislike|More jokes)'))
+    dispatcher.add_handler(CommandHandler('start', start))
+    dispatcher.add_handler(CommandHandler('help', chat_help))
+    dispatcher.add_handler(CommandHandler('cat', get_random_cat))
+    dispatcher.add_handler(CommandHandler('down', get_down_info))
+    dispatcher.add_handler(CommandHandler('movie', movie))
+    dispatcher.add_handler(CommandHandler('pokemon', pokemon))
+    dispatcher.add_handler(CommandHandler('fact_year', fact_year))
+    dispatcher.add_handler(CommandHandler('fact_number', fact_number))
+    dispatcher.add_handler(CommandHandler('magic_ball', magic_ball))
 
     # on noncommand i.e message - echo the message on Telegram
-    updater.dispatcher.add_handler(MessageHandler(Filters.text, echo))
+    dispatcher.add_handler(MessageHandler(Filters.text, echo))
 
     # log all errors
-    updater.dispatcher.add_error_handler(error)
+    dispatcher.add_error_handler(error)
 
     # Start the Bot
     updater.start_polling()
@@ -436,7 +298,6 @@ def main():
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
-    updater.idle()
 
 
 if __name__ == '__main__':
