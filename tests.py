@@ -17,3 +17,8 @@ def test_pokemon():
     assert "Weight" in text
     assert "Height" in text
     assert ".png" in picture
+
+
+def test_number():
+    response = number_response(1)
+    assert "Fact for number 1:" in response
