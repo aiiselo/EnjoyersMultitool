@@ -28,7 +28,3 @@ jobs:
         pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --config=setup.cfg --max-line-length=120 --show-source --statistics --exit-zero
-    - name: Pre-Commit 
-      uses: pre-commit/action@v2.0.3
-      with:
-        extra_args: flake8 --all-files
