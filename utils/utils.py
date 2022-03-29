@@ -2,6 +2,8 @@ import json
 import random
 
 import requests
+from imdb import IMDb
+
 from setup import TOKEN, RAPID_API, OW_API
 
 openweather_url = "http://api.openweathermap.org/data/2.5/weather?q="
@@ -46,3 +48,37 @@ def pokemon_response():
                 Type: {pokemon_info['types'][0]['type']['name']}
                 """
     return text, pokemon_info['sprites']['front_default']
+
+
+def movie_response():
+    ia = IMDb()
+    top = ia.get_top250_movies()
+    random_movie = top[random.randint(0, 249)]
+    id = 'tt' + random_movie.movieID
+    info = requests.get(f'http://www.omdbapi.com/?apikey=5a5643&i={id}')
+    info = json.loads(info.text)
+    # poster = requests.get(f'http://img.omdbapi.com/?apikey=5a5643&i={id}')
+    text = f"""
+            Title: {random_movie.data['title']}
+            Genre: {info["Genre"]}
+            Year: {random_movie.data['year']}
+            Director: {info["Director"]}
+            Runtime: {info["Runtime"]}
+            IMDb rating: {random_movie.data['rating']}
+            Top 250 rank: {random_movie.data['top 250 rank']}
+            Link: https://www.imdb.com/title/{id}/
+            """
+    return text
+
+
+def year_response(year):
+    url = f"https://numbersapi.p.rapidapi.com/{year}/year"
+    querystring = {"fragment": "true", "json": "true"}
+    headers = {
+        'x-rapidapi-host': "numbersapi.p.rapidapi.com",
+        'x-rapidapi-key' : RAPID_API
+    }
+    response = requests.request("GET", url, headers = headers, params = querystring)
+    response = json.loads(response.text)
+    response = f"Year {year}: " + response["text"].capitalize()
+    return response
