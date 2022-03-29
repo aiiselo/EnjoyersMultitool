@@ -68,15 +68,10 @@ def movie_response():
     top = ia.get_top250_movies()
     random_movie = top[random.randint(0, 249)]
     id = 'tt' + random_movie.movieID
-    info = requests.get(f'http://www.omdbapi.com/?apikey=5a5643&i={id}')
-    info = json.loads(info.text)
     # poster = requests.get(f'http://img.omdbapi.com/?apikey=5a5643&i={id}')
     text = f"""
             Title: {random_movie.data['title']}
-            Genre: {info["Genre"]}
             Year: {random_movie.data['year']}
-            Director: {info["Director"]}
-            Runtime: {info["Runtime"]}
             IMDb rating: {random_movie.data['rating']}
             Top 250 rank: {random_movie.data['top 250 rank']}
             Link: https://www.imdb.com/title/{id}/
