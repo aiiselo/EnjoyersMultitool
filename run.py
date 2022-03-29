@@ -34,7 +34,7 @@ def average_time(function):
         t = timer()
         res = function(update, context)
         t = (timer() - t)
-        update.message.reply_text(f'Время: {t} s!')
+        update.message.reply_text(f'Time: {t} s!')
         return res
 
     return inner
@@ -115,15 +115,15 @@ def get_weather(text, chat_id):
             city_humidity = str(city_dict["main"]["humidity"])
             city_wind = str(city_dict["wind"]["speed"])
 
-            weather_text = "<b>Город: </b>{} - {}\n<b>Погода: </b>{}\n<b>Температура: </b>{}°C\n" \
-                           "<b>Ат. давление: </b>{} мм.рт.ст.\n<b>Влажность: </b>{}%\n<b>Ветер: </b>{} м/с".format(
+            weather_text = "<b>City: </b>{} - {}\n<b>Weather: </b>{}\n<b>Temperature: </b>{}°C\n" \
+                           "<b>Pressure: </b>{}\n<b>Humidity: </b>{}%\n<b>Wind: </b>{} m/s".format(
                             city_name, country_name, city_weather, city_temperature, city_pressure, city_humidity,
                             city_wind)
             bot.send_message(chat_id=chat_id, text=weather_text,
                              parse_mode='HTML')
     except:
         bot.send_message(chat_id=chat_id,
-                         text="🛠 Ошибка на стороне сервиса погоды. Попробуйте еще раз.")
+                         text="🛠 Weather service is down. Try again later.")
 
 @add_log
 def error(update: Update, context: CallbackContext):
@@ -200,7 +200,7 @@ def get_random_cat(update: Update, context: CallbackContext):
             break
     else:
         bot.send_message(chat_id=update.effective_chat['id'],
-                         text="🛠 Сервис по выдаче рандомных котиков приуныл. Попробуйте позже.")
+                         text="🛠 Random cats images service is down. Try again later.")
 
 @add_log
 def get_down_info(update: Update, context: CallbackContext):
@@ -218,10 +218,10 @@ def get_down_info(update: Update, context: CallbackContext):
 
     if down_list:
         bot.send_message(chat_id=update.effective_chat['id'],
-                         text=f"🛠 Данные сервисы испытывают проблемы:\n\n❌ {down_text}")
+                         text=f"🛠 These services are down or having problems:\n\n❌ {down_text}")
     else:
         bot.send_message(chat_id=update.effective_chat['id'],
-                         text=f"🛠 Все сервисы в строю!")
+                         text=f"🛠 All services are up!")
 
 @add_log
 def fact_number(update: Update, context: CallbackContext):
