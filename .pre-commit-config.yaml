@@ -10,6 +10,5 @@ ci:
     submodules: false
 
 repos:
--   repo: https://github.com/aiiselo/yoba-project
-    hooks:
-    -   id: pylint
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v1.2.3
