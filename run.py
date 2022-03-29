@@ -13,8 +13,9 @@ from telegram import Bot, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
 
 from setup import TOKEN, RAPID_API, OW_API
+from utils.utils import *
 
-openweather_url = "http://api.openweathermap.org/data/2.5/weather?q="
+
 
 date = datetime.date.today().strftime("%m-%d-%Y")
 bot = Bot(token=TOKEN)
@@ -24,20 +25,6 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
                     level=logging.INFO)
 
 logger = logging.getLogger(__name__)
-
-
-# Define a few command handlers. These usually take the two arguments update and
-# context. Error handlers also receive the raised TelegramError object in error.
-
-def average_time(function):
-    def inner(update: Update, context: CallbackContext):
-        t = timer()
-        res = function(update, context)
-        t = (timer() - t)
-        update.message.reply_text(f'Time: {t} s!')
-        return res
-
-    return inner
 
 
 def start(update: Update, context: CallbackContext):
@@ -71,7 +58,6 @@ def chat_help(update: Update, context: CallbackContext):
 def echo(update: Update, context: CallbackContext):
     """Echo the user message."""
     text = str(update.message.text)
-    print(text)
     if text.startswith("/weather "):
         get_weather(text, update.effective_chat['id'])
     else:
@@ -80,31 +66,11 @@ def echo(update: Update, context: CallbackContext):
 
 def get_weather(text, chat_id):
     city = text.replace("/weather ", "")
-    city_request = requests.get(openweather_url + city + OW_API)
-    try:
-        city_dict = city_request.json()
-        request_code = city_dict["cod"]
-
-        if request_code != 200:
-            bot.send_message(chat_id=chat_id, text=city_dict["message"])
-        else:
-            city_name = city_dict["name"]
-            country_name = city_dict["sys"]["country"]
-            city_weather = city_dict["weather"][0]["description"]
-            city_temperature = str(int(float(city_dict["main"]["temp"]) - 273.15 + 0.5))
-            city_pressure = str(city_dict["main"]["pressure"])
-            city_humidity = str(city_dict["main"]["humidity"])
-            city_wind = str(city_dict["wind"]["speed"])
-
-            weather_text = "<b>City: </b>{} - {}\n<b>Weather: </b>{}\n<b>Temperature: </b>{}°C\n" \
-                           "<b>Pressure: </b>{}\n<b>Humidity: </b>{}%\n<b>Wind: </b>{} m/s".format(
-                            city_name, country_name, city_weather, city_temperature, city_pressure, city_humidity,
-                            city_wind)
-            bot.send_message(chat_id=chat_id, text=weather_text,
-                             parse_mode='HTML')
-    except:
-        bot.send_message(chat_id=chat_id,
-                         text="🛠 Weather service is down. Try again later.")
+    text, html_status = weather_response(city)
+    if html_status:
+        bot.send_message(chat_id=chat_id, text=text, parse_mode='HTML')
+    else:
+        bot.send_message(chat_id=chat_id, text=text)
 
 
 def error(update: Update, context: CallbackContext):
@@ -134,17 +100,9 @@ Link: https://www.imdb.com/title/{id}/
 
 
 def pokemon(update: Update, context: CallbackContext):
-    num = random.randint(1, 807)
-    pokemon_info = requests.get(f'https://pokeapi.co/api/v2/pokemon/{num}/')
-    pokemon_info = json.loads(pokemon_info.text)
-    text = f"""
-Name: {pokemon_info['name'].capitalize()}
-Height: {pokemon_info['height']}
-Weight: {pokemon_info['weight']}
-Type: {pokemon_info['types'][0]['type']['name']}
-"""
+    text, picture = pokemon_response()
     bot.send_message(chat_id=update.effective_chat['id'], text=text)
-    bot.send_photo(chat_id=update.effective_chat['id'], photo=pokemon_info['sprites']['front_default'])
+    bot.send_photo(chat_id=update.effective_chat['id'], photo=picture)
 
 
 def fact_year(update: Update, context: CallbackContext):
