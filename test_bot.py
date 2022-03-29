@@ -41,3 +41,17 @@ def test_year():
     text = year_response(year)
     assert "Year" in text
     assert year in text
+
+
+def test_cat():
+    url = cat_response()
+    assert "https:" in url
+    assert "cat" in url
+    assert "images" in url
+
+
+def test_down():
+    response, status = down_reponse()
+    assert "services" in response
+    assert "are" in response
+    assert "🛠" in response
