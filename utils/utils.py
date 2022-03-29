@@ -49,6 +49,7 @@ def pokemon_response():
                 """
     return text, pokemon_info['sprites']['front_default']
 
+
 def number_response(number):
     url = f"https://numbersapi.p.rapidapi.com/{number}/math"
     querystring = {"fragment": "true", "json": "true"}
@@ -59,7 +60,7 @@ def number_response(number):
     response = requests.request("GET", url, headers=headers, params=querystring )
     response = json.loads(response.text)
     response = f"Fact for number {number}: " + response["text"].capitalize()
-    return response    return text, pokemon_info['sprites']['front_default']
+    return response
 
 
 def movie_response():

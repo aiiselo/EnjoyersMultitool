@@ -22,7 +22,6 @@ def test_pokemon():
 def test_number():
     response = number_response(1)
     assert "Fact for number 1:" in response
-    assert ".png" in picture
 
 
 def test_movie():
