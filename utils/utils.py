@@ -71,11 +71,11 @@ def pokemon_response():
     pokemon_info = requests.get( f'https://pokeapi.co/api/v2/pokemon/{num}/' )
     pokemon_info = json.loads(pokemon_info.text )
     text = f"""
-                Name: {pokemon_info['name'].capitalize()}
-                Height: {pokemon_info['height']}
-                Weight: {pokemon_info['weight']}
-                Type: {pokemon_info['types'][0]['type']['name']}
-                """
+Name: {pokemon_info['name'].capitalize()}
+Height: {pokemon_info['height']}
+Weight: {pokemon_info['weight']}
+Type: {pokemon_info['types'][0]['type']['name']}
+"""
     return text, pokemon_info['sprites']['front_default']
 
 
@@ -101,15 +101,15 @@ def movie_response():
     info = json.loads(info.text)
     # poster = requests.get(f'http://img.omdbapi.com/?apikey=5a5643&i={id}')
     text = f"""
-            Title: {random_movie.data['title']}
-            Genre: {info["Genre"]}
-            Year: {random_movie.data['year']}
-            Director: {info["Director"]}
-            Runtime: {info["Runtime"]}
-            IMDb rating: {random_movie.data['rating']}
-            Top 250 rank: {random_movie.data['top 250 rank']}
-            Link: https://www.imdb.com/title/{id}/
-            """
+Title: {random_movie.data['title']}
+Genre: {info["Genre"]}
+Year: {random_movie.data['year']}
+Director: {info["Director"]}
+Runtime: {info["Runtime"]}
+IMDb rating: {random_movie.data['rating']}
+Top 250 rank: {random_movie.data['top 250 rank']}
+Link: https://www.imdb.com/title/{id}/
+"""
     return text
 
 
