@@ -1,16 +1,45 @@
 import json
 import random
+from bs4 import BeautifulSoup
 
 import requests
 from imdb import IMDb
 
 from setup import TOKEN, RAPID_API, OW_API
 
+
 openweather_url = "http://api.openweathermap.org/data/2.5/weather?q="
 
 
+def down_reponse():
+    url_uptime = "https://servicesdown.com"
+    uptime_request = requests.get(url_uptime).content
+    uptime_soup = BeautifulSoup(uptime_request, 'html')
+    status_uptime = uptime_soup.find_all("div", {"class": "flex flex-col items-center"})
+    down_list = []
+
+    for element in status_uptime:
+        if element.find("div", {"class": "bg-red-200 text-sm opacity-75 text-red-800 px-2 rounded text-center"}):
+            down_list.append(element.div.img.get('alt'))
+
+    down_text = "\n❌ ".join(down_list)
+
+    if down_list:
+        return f"🛠 These services are down or having problems:\n\n❌ {down_text}", True
+    else:
+        return f"🛠 All services are up!", False
+
+
+def cat_response():
+    pic_request = requests.get(url="https://api.thecatapi.com/v1/images/search")
+    pic_dict = pic_request.json()[0]
+    pic_url = pic_dict['url']
+
+    return pic_url
+
+
 def weather_response(city):
-    city_request = requests.get( openweather_url + city + OW_API )
+    city_request = requests.get(openweather_url + city + OW_API)
     status_html = False
     try:
         city_dict = city_request.json()
