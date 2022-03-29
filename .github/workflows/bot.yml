@@ -28,7 +28,3 @@ jobs:
         pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --config=setup.cfg --max-line-length=120 --show-source --statistics --exit-zero
-    - name: Run coverage
-      run: |
-        pip install coverage
-        coverage run -m unittest discover tests && coverage report -m
