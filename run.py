@@ -16,7 +16,6 @@ from setup import TOKEN, RAPID_API, OW_API
 from utils.utils import *
 
 
-
 date = datetime.date.today().strftime("%m-%d-%Y")
 bot = Bot(token=TOKEN)
 # Enable logging
@@ -100,41 +99,20 @@ def fact_year(update: Update, context: CallbackContext):
 
 
 def get_random_cat(update: Update, context: CallbackContext):
-    for i in range(5):
-        try:
-            pic_request = requests.get(url="https://api.thecatapi.com/v1/images/search")
-            pic_dict = pic_request.json()[0]
-            pic_url = pic_dict['url']
+    response = cat_response()
 
-            bot.send_photo(chat_id=update.effective_chat['id'], photo=pic_url)
-        except:
-            continue
-        else:
-            break
-    else:
-        bot.send_message(chat_id=update.effective_chat['id'],
-                         text="🛠 Random cats images service is down. Try again later.")
+    bot.send_photo(chat_id=update.effective_chat['id'], photo=response)
 
 
 def get_down_info(update: Update, context: CallbackContext):
-    url_uptime = "https://servicesdown.com"
-    uptime_request = requests.get(url_uptime).content
-    uptime_soup = BeautifulSoup(uptime_request, 'html')
-    status_uptime = uptime_soup.find_all("div", {"class": "flex flex-col items-center"})
-    down_list = []
+    response, status = down_reponse()
 
-    for element in status_uptime:
-        if element.find("div", {"class": "bg-red-200 text-sm opacity-75 text-red-800 px-2 rounded text-center"}):
-            down_list.append(element.div.img.get('alt'))
-
-    down_text = "\n❌ ".join(down_list)
-
-    if down_list:
+    if status:
         bot.send_message(chat_id=update.effective_chat['id'],
-                         text=f"🛠 These services are down or having problems:\n\n❌ {down_text}")
+                         text=response)
     else:
         bot.send_message(chat_id=update.effective_chat['id'],
-                         text=f"🛠 All services are up!")
+                         text=response)
 
 
 def fact_number(update: Update, context: CallbackContext):
