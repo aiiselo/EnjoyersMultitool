@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import logging
+import datetime
 import json
+import logging
 import random
 from timeit import default_timer as timer
-import requests
-import datetime
 
+import requests
 from bs4 import BeautifulSoup
 from imdb import IMDb
-from setup import TOKEN, RAPID_API, OW_API
 from telegram import Bot, Update
 from telegram.ext import CallbackContext, CommandHandler, Filters, MessageHandler, Updater
-from classes import Logs
+
+from setup import TOKEN, RAPID_API, OW_API
 
 openweather_url = "http://api.openweathermap.org/data/2.5/weather?q="
 
@@ -40,23 +40,6 @@ def average_time(function):
     return inner
 
 
-def add_log(function):
-    def wrapper(*args, **kwargs):
-        message = 'button' if args[0].message is None else args[0].message.text
-        new_log = {
-            "user": args[0].effective_user.username,
-            "function": function.__name__,
-            "message": message,
-            "time": args[0].effective_message.date
-        }
-        logs = Logs()
-        logs.addLog(new_log)
-        return function(*args, **kwargs)
-
-    return wrapper
-
-
-@add_log
 def start(update: Update, context: CallbackContext):
     """Send a message when the command /start is issued."""
     text = f"""
@@ -67,7 +50,6 @@ If you need help, enter /help command.
     update.message.reply_text(text=text)
 
 
-@add_log
 def chat_help(update: Update, context: CallbackContext):
     """Send a message when the command /help is issued."""
     text = """
@@ -86,7 +68,6 @@ def chat_help(update: Update, context: CallbackContext):
     update.message.reply_text(text)
 
 
-@add_log
 def echo(update: Update, context: CallbackContext):
     """Echo the user message."""
     text = str(update.message.text)
@@ -125,12 +106,12 @@ def get_weather(text, chat_id):
         bot.send_message(chat_id=chat_id,
                          text="🛠 Weather service is down. Try again later.")
 
-@add_log
+
 def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
     logger.warning(f'Update {update} caused error {context.error}')
 
-@add_log
+
 def movie(update: Update, context: CallbackContext):
     ia = IMDb()
     top = ia.get_top250_movies()
@@ -152,7 +133,6 @@ Link: https://www.imdb.com/title/{id}/
     update.message.reply_text(text=text, disable_web_page_preview=False)
 
 
-@add_log
 def pokemon(update: Update, context: CallbackContext):
     num = random.randint(1, 807)
     pokemon_info = requests.get(f'https://pokeapi.co/api/v2/pokemon/{num}/')
@@ -166,14 +146,13 @@ Type: {pokemon_info['types'][0]['type']['name']}
     bot.send_message(chat_id=update.effective_chat['id'], text=text)
     bot.send_photo(chat_id=update.effective_chat['id'], photo=pokemon_info['sprites']['front_default'])
 
-@add_log
+
 def fact_year(update: Update, context: CallbackContext):
     data = update.message['text'].split()
-    year = 0
     try:
         year = data[1]
     except:
-        year = 2020
+        year = datetime.datetime.now().year
     url = f"https://numbersapi.p.rapidapi.com/{year}/year"
     querystring = {"fragment": "true", "json": "true"}
     headers = {
@@ -185,7 +164,7 @@ def fact_year(update: Update, context: CallbackContext):
     response = f"Year {year}: " + response["text"].capitalize()
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
-@add_log
+
 def get_random_cat(update: Update, context: CallbackContext):
     for i in range(5):
         try:
@@ -202,7 +181,7 @@ def get_random_cat(update: Update, context: CallbackContext):
         bot.send_message(chat_id=update.effective_chat['id'],
                          text="🛠 Random cats images service is down. Try again later.")
 
-@add_log
+
 def get_down_info(update: Update, context: CallbackContext):
     url_uptime = "https://servicesdown.com"
     uptime_request = requests.get(url_uptime).content
@@ -223,10 +202,9 @@ def get_down_info(update: Update, context: CallbackContext):
         bot.send_message(chat_id=update.effective_chat['id'],
                          text=f"🛠 All services are up!")
 
-@add_log
+
 def fact_number(update: Update, context: CallbackContext):
     data = update.message['text'].split()
-    number = 0
     try:
         number = data[1]
     except:
@@ -242,7 +220,7 @@ def fact_number(update: Update, context: CallbackContext):
     response = f"Fact for number {number}: " + response["text"].capitalize()
     bot.send_message(chat_id=update.effective_chat['id'], text=response)
 
-@add_log
+
 def magic_ball(update: Update, context: CallbackContext):
     responses = [
         "It is certain",
